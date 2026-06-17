@@ -13,9 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    "https://scholarship-portal-coral.vercel.app"
-  ),
+  metadataBase: new URL("https://scholarship-portal-coral.vercel.app"),
 
   title: {
     default: "Scholarship Hub",
@@ -48,16 +46,10 @@ export const metadata: Metadata = {
     title: "Scholarship Hub",
     description:
       "Temukan beasiswa internasional dan peluang studi luar negeri terbaru.",
-
-    url:
-      "https://scholarship-portal-coral.vercel.app",
-
+    url: "https://scholarship-portal-coral.vercel.app",
     siteName: "Scholarship Hub",
-
     locale: "id_ID",
-
     type: "website",
-
     images: [
       {
         url: "/og-image.png",
@@ -70,19 +62,15 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-
     title: "Scholarship Hub",
-
     description:
       "Temukan beasiswa internasional dan peluang studi luar negeri.",
-
     images: ["/og-image.png"],
   },
 
   robots: {
     index: true,
     follow: true,
-
     googleBot: {
       index: true,
       follow: true,
