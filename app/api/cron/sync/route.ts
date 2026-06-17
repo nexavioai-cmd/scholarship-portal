@@ -1,64 +1,62 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Konfigurasi wajib untuk serverless environment Vercel
-export const maxDuration = 60; // Mengizinkan fungsi berjalan hingga 60 detik (Maksimum Hobby Plan)
+// Konfigurasi durasi agar sinkronisasi tidak terputus di tengah jalan
+export const maxDuration = 60; 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  // 1. Proteksi Keamanan Ekstra: Validasi Token Rahasia Vercel Cron
-  // Masukkan variabel CRON_SECRET di dashboard Vercel (bisa diisi string acak bebas)
+  // 1. Keamanan: Validasi Token Rahasia
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new NextResponse("Unauthorized", { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  console.log("=== 🔄 VERCEL CRON: START GLOBAL SYNCHRONIZATION ===");
-  const reports: any[] = [];
+  console.log("=== 🔄 STARTING AUTOMATED SYNCHRONIZATION ===");
 
-  // Inisialisasi Supabase Admin menggunakan Service Role Key agar kebal RLS
+  // Inisialisasi Supabase Admin (Menggunakan Service Role Key agar tidak terblokir RLS)
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || "",
     process.env.SUPABASE_SERVICE_ROLE_KEY || ""
   );
 
   try {
-    // 2. Memuat Fungsi Scraper secara Dinamis (Aman untuk Bundling Serverless Vercel)
+    // 2. Impor Skrip (Pastikan path ke file skrip Anda benar)
     const scrapeMext = require("../../../../scripts/scrape-mext");
     const scrapeLpdp = require("../../../../scripts/scrape-lpdp");
     const scrapeErasmus = require("../../../../scripts/scrape-erasmus");
 
-    console.log("⏳ Memproses Beasiswa MEXT...");
-    const mextResult = await scrapeMext();
-    reports.push(mextResult);
+    console.log("⏳ Memulai proses scraping...");
+    
+    // Menjalankan semua skrip secara berurutan
+    const reports = [
+      await scrapeMext(),
+      await scrapeLpdp(),
+      await scrapeErasmus()
+    ];
 
-    console.log("⏳ Memproses Beasiswa LPDP...");
-    const lpdpResult = await scrapeLpdp();
-    reports.push(lpdpResult);
-
-    console.log("⏳ Memproses Beasiswa Erasmus...");
-    const erasmusResult = await scrapeErasmus();
-    reports.push(erasmusResult);
-
-    // 3. Masukkan Ringkasan Log Performa ke Tabel sync_logs
-    console.log("💾 Menyimpan ringkasan statistik ke Supabase...");
+    // 3. Simpan statistik ke tabel sync_logs
+    console.log("💾 Menyimpan ringkasan ke database...");
     const { error: logError } = await supabaseAdmin
       .from("sync_logs")
       .insert(reports);
 
     if (logError) {
-      console.error("❌ Gagal mencatat statistik ke sync_logs:", logError.message);
-      return NextResponse.json({ success: false, error: logError.message }, { status: 500 });
+      throw new Error(`Gagal menyimpan log: ${logError.message}`);
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Serverless synchronization complete and logged successfully!",
-      summary: reports
+    console.log("✅ Sinkronisasi selesai!");
+    return NextResponse.json({ 
+      success: true, 
+      message: "Sync process completed",
+      summary: reports 
     });
 
   } catch (error: any) {
-    console.error("❌ Critical Serverless Error:", error.message);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("❌ Sync Error:", error.message);
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message 
+    }, { status: 500 });
   }
 }

@@ -1,39 +1,67 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-export default function AdminPage() {
-  // 2. State data admin
+export default function AdminDashboard() {
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [scholarships, setScholarships] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    fullyFunded: 0,
+    countries: 0,
+    openScholarships: 0,
+  });
 
-  // 3. Load data saat halaman dibuka
   useEffect(() => {
-    loadScholarships();
+    checkAdmin();
   }, []);
 
-  const loadScholarships = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
+  const checkAdmin = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (data?.role === "admin") {
+      setIsAdmin(true);
+      fetchStats();
+    } else {
+      setIsAdmin(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    const { data } = await supabase
       .from("scholarships")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error(error);
-      alert("Gagal memuat data beasiswa.");
-    } else {
-      setScholarships(data || []);
-    }
-    setLoading(false);
+    setScholarships(data || []);
+
+    const uniqueCountries = new Set(
+      data?.map((s) => s.country)
+    ).size;
+
+    setStats({
+      total: data?.length || 0,
+      fullyFunded:
+        data?.filter((s) => s.funding_type === "Fully Funded").length || 0,
+      countries: uniqueCountries,
+      openScholarships:
+        data?.filter((s) => s.is_open === true).length || 0,
+    });
   };
 
-  // 4. Fungsi Delete
   const deleteScholarship = async (id: number) => {
     const confirmed = confirm("Yakin ingin menghapus beasiswa ini?");
-
     if (!confirmed) return;
 
     const { error } = await supabase
@@ -42,95 +70,112 @@ export default function AdminPage() {
       .eq("id", id);
 
     if (error) {
-      console.error(error);
-      alert("Gagal menghapus.");
+      alert("Gagal menghapus");
       return;
     }
 
-    // Filter out dari state agar UI langsung ter-update
     setScholarships((prev) => prev.filter((item) => item.id !== id));
-
-    alert("Beasiswa berhasil dihapus.");
+    fetchStats();
   };
 
-  return (
-    <main className="min-h-screen bg-gray-50 px-6 py-10">
-      <div className="mx-auto max-w-7xl">
-        
-        {/* 1. Tampilkan tombol Tambah/Edit/Hapus dengan UI rapi */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-sm text-gray-500 mt-1">Sistem Manajemen Konten Data Beasiswa</p>
-          </div>
+  if (isAdmin === null) return <main className="p-10">Loading...</main>;
 
-          <Link
-            href="/admin/new"
-            className="rounded-xl bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700 shadow transition"
-          >
-            + Tambah Beasiswa
-          </Link>
+  if (!isAdmin) {
+    return (
+      <main className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-red-600">403 - Access Denied</h1>
+          <p className="mt-2 text-gray-600">Anda tidak memiliki hak akses sebagai admin.</p>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-gray-50 p-10">
+      <h1 className="mb-8 text-3xl font-bold">Admin Dashboard</h1>
+
+      {/* Dashboard Statistik */}
+      <div className="mb-8 grid gap-4 md:grid-cols-4">
+        <div className="rounded-2xl bg-white p-6 shadow">
+          <p className="text-sm text-gray-500">Total Scholarship</p>
+          <h2 className="mt-2 text-3xl font-bold text-blue-600">{stats.total}</h2>
+        </div>
+        <div className="rounded-2xl bg-white p-6 shadow">
+          <p className="text-sm text-gray-500">Fully Funded</p>
+          <h2 className="mt-2 text-3xl font-bold text-green-600">{stats.fullyFunded}</h2>
+        </div>
+        <div className="rounded-2xl bg-white p-6 shadow">
+          <p className="text-sm text-gray-500">Countries</p>
+          <h2 className="mt-2 text-3xl font-bold text-indigo-600">{stats.countries}</h2>
+        </div>
+        <div className="rounded-2xl bg-white p-6 shadow">
+          <p className="text-sm text-gray-500">Open Scholarships</p>
+          <h2 className="mt-2 text-3xl font-bold text-purple-600">{stats.openScholarships}</h2>
+        </div>
+      </div>
+
+      {/* Manajemen Beasiswa */}
+      <div className="rounded-2xl bg-white p-6 shadow">
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-2xl font-bold">Manajemen Beasiswa</h3>
         </div>
 
-        {/* 5. Tampilkan tabel admin */}
-        {loading ? (
-          <div className="rounded-2xl bg-white p-10 text-center shadow text-gray-500">
-            Memuat tabel data beasiswa...
-          </div>
-        ) : scholarships.length === 0 ? (
-          <div className="rounded-2xl bg-white p-10 text-center shadow">
-            <p className="text-gray-500 font-medium">Belum ada data beasiswa di database.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto rounded-2xl bg-white shadow">
-            <table className="min-w-full table-auto">
-              <thead className="bg-gray-100 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Nama Beasiswa</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Provider</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Negara</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Deadline</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-600">Aksi</th>
-                </tr>
-              </thead>
+        <div className="mb-6 flex gap-3">
+          <a
+            href="/admin/new"
+            className="rounded bg-blue-600 px-4 py-2 text-white"
+          >
+            + Tambah Beasiswa
+          </a>
 
-              <tbody className="divide-y divide-gray-100">
-                {scholarships.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {item.name}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {item.provider}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {item.country}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {item.deadline || "-"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-center gap-2">
-                        <Link
-                          href={`/admin/edit/${item.id}`}
-                          className="rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 transition"
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => deleteScholarship(item.id)}
-                          className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 transition"
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+          <a
+            href="/admin/logs"
+            className="rounded bg-green-600 px-4 py-2 text-white"
+          >
+            Sync Logs
+          </a>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="p-3 text-left">Nama</th>
+                <th className="p-3 text-left">Negara</th>
+                <th className="p-3 text-left">Funding</th>
+                <th className="p-3 text-left">Deadline</th>
+                <th className="p-3 text-left">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scholarships.map((item) => (
+                <tr key={item.id} className="border-b">
+                  <td className="p-3">{item.name}</td>
+                  <td className="p-3">{item.country}</td>
+                  <td className="p-3">{item.funding_type}</td>
+                  <td className="p-3">{item.deadline}</td>
+                  <td className="p-3">
+                    <div className="flex gap-2">
+                      <a
+                        href={`/admin/edit/${item.id}`}
+                        className="rounded bg-yellow-500 px-3 py-2 text-white"
+                      >
+                        Edit
+                      </a>
+                      <button
+                        onClick={() => deleteScholarship(item.id)}
+                        className="rounded bg-red-500 px-3 py-2 text-white"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </main>
   );

@@ -85,16 +85,12 @@ export default function Home() {
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: window.location.origin,
       },
     });
-
-    if (error) {
-      console.error("LOGIN ERROR:", error);
-    }
   };
 
   const signOut = async () => {
@@ -230,7 +226,6 @@ export default function Home() {
     };
   };
 
-  // RENDER UNTUK USER YANG SUDAH LOGIN
   if (user) {
     return (
       <main className="min-h-screen bg-gray-50 px-6 py-10">
@@ -462,7 +457,6 @@ export default function Home() {
     );
   }
 
-  // RENDER UNTUK USER YANG BELUM LOGIN
   return (
     <main style={{ padding: "40px" }}>
       <h1>Scholarship Portal</h1>

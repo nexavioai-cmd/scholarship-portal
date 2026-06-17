@@ -1,19 +1,10 @@
-export const metadata: Metadata = {
-  // ... konfigurasi sebelumnya
-  openGraph: {
-    siteName: "Scholarship Hub",
-    type: "website",
-    images: [
-      {
-        url: "/og-image.png", // Next.js otomatis mencari file ini di folder public/
-        width: 1200,
-        height: 630,
-        alt: "Scholarship Hub",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    images: ["/og-image.png"],
-  },
-};
+openGraph: {
+  images: [
+    {
+      url: "/og-image.png",
+      width: 1200,
+      height: 630,
+      alt: "Scholarship Hub",
+    },
+  ],
+},
