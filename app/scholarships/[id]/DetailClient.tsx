@@ -8,9 +8,8 @@ import { User } from "@supabase/supabase-js";
 import ScholarshipHero from "@/components/scholarship/ScholarshipHero";
 import ScholarshipMeta from "@/components/scholarship/ScholarshipMeta";
 import ScholarshipDescription from "@/components/scholarship/ScholarshipDescription";
-import SimilarScholarships from "@/components/scholarship/SimilarScholarships";
 
-interface Scholarship {
+export interface Scholarship {
   id: number;
   name: string;
   provider: string;
@@ -24,7 +23,13 @@ interface Scholarship {
   minimum_gpa?: string;
 }
 
-export default function DetailClient({ initialData }: { initialData: Scholarship }) {
+export default function DetailClient({ 
+  initialData, 
+  children 
+}: { 
+  initialData: Scholarship; 
+  children: React.ReactNode;
+}) {
   const [user, setUser] = useState<User | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -87,7 +92,7 @@ export default function DetailClient({ initialData }: { initialData: Scholarship
             <ScholarshipDescription description={initialData.description || "Tidak ada deskripsi tersedia."} />
           </div>
           <div>
-            <SimilarScholarships currentId={initialData.id} country={initialData.country} />
+            {children}
           </div>
         </div>
       </div>

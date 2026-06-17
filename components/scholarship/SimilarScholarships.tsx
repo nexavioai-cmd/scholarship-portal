@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
 
+// Mendefinisikan tipe data untuk beasiswa agar rapi
+interface SimilarScholarship {
+  id: number;
+  name: string;
+  country: string;
+}
+
 export default async function SimilarScholarships({
   currentId,
   country,
@@ -8,7 +15,8 @@ export default async function SimilarScholarships({
   currentId: number;
   country: string;
 }) {
-  const supabase = createClient();
+  // Tambahkan 'await' karena fungsi createClient bersifat async
+  const supabase = await createClient();
 
   const { data } = await supabase
     .from("scholarships")
@@ -23,7 +31,7 @@ export default async function SimilarScholarships({
     <div className="bg-white p-6 rounded-3xl shadow-sm border">
       <h3 className="font-bold text-lg mb-4">Beasiswa Serupa</h3>
       <div className="space-y-3">
-        {data.map((item) => (
+        {data.map((item: SimilarScholarship) => (
           <Link
             key={item.id}
             href={`/scholarships/${item.id}`}
