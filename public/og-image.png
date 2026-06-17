@@ -1,10 +1,32 @@
-openGraph: {
-  images: [
-    {
-      url: "/og-image.png",
-      width: 1200,
-      height: 630,
-      alt: "Scholarship Hub",
-    },
-  ],
-},
+export const metadata: Metadata = {
+  metadataBase: new URL(
+    "https://scholarship-portal-coral.vercel.app"
+  ),
+
+  title: {
+    default: "Scholarship Hub",
+    template: "%s | Scholarship Hub",
+  },
+
+  description:
+    "Temukan beasiswa internasional dan peluang belajar ke luar negeri.",
+
+  openGraph: {
+    title: "Scholarship Hub",
+    description:
+      "Temukan beasiswa internasional dan peluang belajar ke luar negeri.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Scholarship Hub",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
+  },
+};
