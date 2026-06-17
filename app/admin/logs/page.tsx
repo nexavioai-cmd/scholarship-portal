@@ -10,7 +10,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function AdminLogsPage() {
   // Menggunakan state JavaScript standar
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Fungsi Mengambil Data Log Terbaru dari Supabase
