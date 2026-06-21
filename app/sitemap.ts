@@ -10,9 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from("scholarships")
     .select("id");
 
-  console.log("SITEMAP DATA:", data?.length);
-  console.log("SITEMAP ERROR:", error);
-
+  
   const scholarshipPages =
     data?.map((item) => ({
       url: `${baseUrl}/scholarships/${item.id}`,
